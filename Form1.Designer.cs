@@ -28,10 +28,13 @@ namespace ModbusRTU_TCP
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.lstLog = new System.Windows.Forms.ListBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.btnCloseSerial = new System.Windows.Forms.Button();
-            this.btnSendData = new System.Windows.Forms.Button();
-            this.btnOpenSerial = new System.Windows.Forms.Button();
-            this.btnClearLog = new System.Windows.Forms.Button();
+            this.btnDbClear = new System.Windows.Forms.Button();
+            this.btnExportTxt = new System.Windows.Forms.Button();
+            this.btnDbDelete = new System.Windows.Forms.Button();
+            this.btnExportCsv = new System.Windows.Forms.Button();
+            this.btnDbUpdate = new System.Windows.Forms.Button();
+            this.btnDbCreate = new System.Windows.Forms.Button();
+            this.btnDbQuery = new System.Windows.Forms.Button();
             this.groupBoxSerial = new System.Windows.Forms.GroupBox();
             this.cboBaudRate = new System.Windows.Forms.ComboBox();
             this.cboPortName = new System.Windows.Forms.ComboBox();
@@ -51,13 +54,10 @@ namespace ModbusRTU_TCP
             this.lblPort = new System.Windows.Forms.Label();
             this.lblIP = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.btnDbClear = new System.Windows.Forms.Button();
-            this.btnDbDelete = new System.Windows.Forms.Button();
-            this.btnDbUpdate = new System.Windows.Forms.Button();
-            this.btnDbQuery = new System.Windows.Forms.Button();
-            this.btnDbCreate = new System.Windows.Forms.Button();
-            this.btnExportCsv = new System.Windows.Forms.Button();
-            this.btnExportTxt = new System.Windows.Forms.Button();
+            this.btnClearLog = new System.Windows.Forms.Button();
+            this.btnSendData = new System.Windows.Forms.Button();
+            this.btnCloseSerial = new System.Windows.Forms.Button();
+            this.btnOpenSerial = new System.Windows.Forms.Button();
             this.groupBoxBatch = new System.Windows.Forms.GroupBox();
             this.lblBatchWriteValue = new System.Windows.Forms.Label();
             this.txtBatchWriteValue = new System.Windows.Forms.TextBox();
@@ -137,45 +137,75 @@ namespace ModbusRTU_TCP
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "数据操作";
             // 
-            // btnCloseSerial
+            // btnDbClear
             // 
-            this.btnCloseSerial.Location = new System.Drawing.Point(207, 12);
-            this.btnCloseSerial.Name = "btnCloseSerial";
-            this.btnCloseSerial.Size = new System.Drawing.Size(75, 26);
-            this.btnCloseSerial.TabIndex = 5;
-            this.btnCloseSerial.Text = "关闭串口";
-            this.btnCloseSerial.UseVisualStyleBackColor = true;
-            this.btnCloseSerial.Click += new System.EventHandler(this.btnCloseSerial_Click);
+            this.btnDbClear.Location = new System.Drawing.Point(184, 17);
+            this.btnDbClear.Name = "btnDbClear";
+            this.btnDbClear.Size = new System.Drawing.Size(55, 23);
+            this.btnDbClear.TabIndex = 6;
+            this.btnDbClear.Text = "清空";
+            this.btnDbClear.UseVisualStyleBackColor = true;
+            this.btnDbClear.Click += new System.EventHandler(this.btnDbClear_Click);
             // 
-            // btnSendData
+            // btnExportTxt
             // 
-            this.btnSendData.Location = new System.Drawing.Point(6, 12);
-            this.btnSendData.Name = "btnSendData";
-            this.btnSendData.Size = new System.Drawing.Size(75, 26);
-            this.btnSendData.TabIndex = 3;
-            this.btnSendData.Text = "发送报文";
-            this.btnSendData.UseVisualStyleBackColor = true;
-            this.btnSendData.Click += new System.EventHandler(this.btnSendData_Click);
+            this.btnExportTxt.Location = new System.Drawing.Point(9, 18);
+            this.btnExportTxt.Name = "btnExportTxt";
+            this.btnExportTxt.Size = new System.Drawing.Size(60, 23);
+            this.btnExportTxt.TabIndex = 0;
+            this.btnExportTxt.Text = "导出TXT";
+            this.btnExportTxt.UseVisualStyleBackColor = true;
+            this.btnExportTxt.Click += new System.EventHandler(this.btnExportTxt_Click);
             // 
-            // btnOpenSerial
+            // btnDbDelete
             // 
-            this.btnOpenSerial.Location = new System.Drawing.Point(105, 12);
-            this.btnOpenSerial.Name = "btnOpenSerial";
-            this.btnOpenSerial.Size = new System.Drawing.Size(75, 26);
-            this.btnOpenSerial.TabIndex = 4;
-            this.btnOpenSerial.Text = "打开串口";
-            this.btnOpenSerial.UseVisualStyleBackColor = true;
-            this.btnOpenSerial.Click += new System.EventHandler(this.btnOpenSerial_Click);
+            this.btnDbDelete.Location = new System.Drawing.Point(90, 54);
+            this.btnDbDelete.Name = "btnDbDelete";
+            this.btnDbDelete.Size = new System.Drawing.Size(60, 23);
+            this.btnDbDelete.TabIndex = 5;
+            this.btnDbDelete.Text = "删除";
+            this.btnDbDelete.UseVisualStyleBackColor = true;
+            this.btnDbDelete.Click += new System.EventHandler(this.btnDbDelete_Click);
             // 
-            // btnClearLog
+            // btnExportCsv
             // 
-            this.btnClearLog.Location = new System.Drawing.Point(300, 12);
-            this.btnClearLog.Name = "btnClearLog";
-            this.btnClearLog.Size = new System.Drawing.Size(85, 26);
-            this.btnClearLog.TabIndex = 4;
-            this.btnClearLog.Text = " 清除日志";
-            this.btnClearLog.UseVisualStyleBackColor = true;
-            this.btnClearLog.Click += new System.EventHandler(this.btnClearLog_Click);
+            this.btnExportCsv.Location = new System.Drawing.Point(90, 17);
+            this.btnExportCsv.Name = "btnExportCsv";
+            this.btnExportCsv.Size = new System.Drawing.Size(60, 23);
+            this.btnExportCsv.TabIndex = 1;
+            this.btnExportCsv.Text = "导出CSV";
+            this.btnExportCsv.UseVisualStyleBackColor = true;
+            this.btnExportCsv.Click += new System.EventHandler(this.btnExportCsv_Click);
+            // 
+            // btnDbUpdate
+            // 
+            this.btnDbUpdate.Location = new System.Drawing.Point(184, 54);
+            this.btnDbUpdate.Name = "btnDbUpdate";
+            this.btnDbUpdate.Size = new System.Drawing.Size(55, 23);
+            this.btnDbUpdate.TabIndex = 4;
+            this.btnDbUpdate.Text = "修改";
+            this.btnDbUpdate.UseVisualStyleBackColor = true;
+            this.btnDbUpdate.Click += new System.EventHandler(this.btnDbUpdate_Click);
+            // 
+            // btnDbCreate
+            // 
+            this.btnDbCreate.Location = new System.Drawing.Point(9, 54);
+            this.btnDbCreate.Name = "btnDbCreate";
+            this.btnDbCreate.Size = new System.Drawing.Size(60, 23);
+            this.btnDbCreate.TabIndex = 2;
+            this.btnDbCreate.Text = "新增";
+            this.btnDbCreate.UseVisualStyleBackColor = true;
+            this.btnDbCreate.Click += new System.EventHandler(this.btnDbCreate_Click);
+            // 
+            // btnDbQuery
+            // 
+            this.btnDbQuery.Location = new System.Drawing.Point(268, 54);
+            this.btnDbQuery.Name = "btnDbQuery";
+            this.btnDbQuery.Size = new System.Drawing.Size(55, 23);
+            this.btnDbQuery.TabIndex = 3;
+            this.btnDbQuery.Text = "查询";
+            this.btnDbQuery.UseVisualStyleBackColor = true;
+            this.btnDbQuery.Click += new System.EventHandler(this.btnDbQuery_Click);
             // 
             // groupBoxSerial
             // 
@@ -367,75 +397,45 @@ namespace ModbusRTU_TCP
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "功能按钮";
             // 
-            // btnDbClear
+            // btnClearLog
             // 
-            this.btnDbClear.Location = new System.Drawing.Point(184, 20);
-            this.btnDbClear.Name = "btnDbClear";
-            this.btnDbClear.Size = new System.Drawing.Size(55, 23);
-            this.btnDbClear.TabIndex = 6;
-            this.btnDbClear.Text = "清空";
-            this.btnDbClear.UseVisualStyleBackColor = true;
-            this.btnDbClear.Click += new System.EventHandler(this.btnDbClear_Click);
+            this.btnClearLog.Location = new System.Drawing.Point(300, 12);
+            this.btnClearLog.Name = "btnClearLog";
+            this.btnClearLog.Size = new System.Drawing.Size(85, 26);
+            this.btnClearLog.TabIndex = 4;
+            this.btnClearLog.Text = " 清除日志";
+            this.btnClearLog.UseVisualStyleBackColor = true;
+            this.btnClearLog.Click += new System.EventHandler(this.btnClearLog_Click);
             // 
-            // btnDbDelete
+            // btnSendData
             // 
-            this.btnDbDelete.Location = new System.Drawing.Point(90, 54);
-            this.btnDbDelete.Name = "btnDbDelete";
-            this.btnDbDelete.Size = new System.Drawing.Size(60, 23);
-            this.btnDbDelete.TabIndex = 5;
-            this.btnDbDelete.Text = "删除";
-            this.btnDbDelete.UseVisualStyleBackColor = true;
-            this.btnDbDelete.Click += new System.EventHandler(this.btnDbDelete_Click);
+            this.btnSendData.Location = new System.Drawing.Point(6, 12);
+            this.btnSendData.Name = "btnSendData";
+            this.btnSendData.Size = new System.Drawing.Size(75, 26);
+            this.btnSendData.TabIndex = 3;
+            this.btnSendData.Text = "发送报文";
+            this.btnSendData.UseVisualStyleBackColor = true;
+            this.btnSendData.Click += new System.EventHandler(this.btnSendData_Click);
             // 
-            // btnDbUpdate
+            // btnCloseSerial
             // 
-            this.btnDbUpdate.Location = new System.Drawing.Point(184, 54);
-            this.btnDbUpdate.Name = "btnDbUpdate";
-            this.btnDbUpdate.Size = new System.Drawing.Size(55, 23);
-            this.btnDbUpdate.TabIndex = 4;
-            this.btnDbUpdate.Text = "修改";
-            this.btnDbUpdate.UseVisualStyleBackColor = true;
-            this.btnDbUpdate.Click += new System.EventHandler(this.btnDbUpdate_Click);
+            this.btnCloseSerial.Location = new System.Drawing.Point(207, 12);
+            this.btnCloseSerial.Name = "btnCloseSerial";
+            this.btnCloseSerial.Size = new System.Drawing.Size(75, 26);
+            this.btnCloseSerial.TabIndex = 5;
+            this.btnCloseSerial.Text = "关闭串口";
+            this.btnCloseSerial.UseVisualStyleBackColor = true;
+            this.btnCloseSerial.Click += new System.EventHandler(this.btnCloseSerial_Click);
             // 
-            // btnDbQuery
+            // btnOpenSerial
             // 
-            this.btnDbQuery.Location = new System.Drawing.Point(268, 54);
-            this.btnDbQuery.Name = "btnDbQuery";
-            this.btnDbQuery.Size = new System.Drawing.Size(55, 23);
-            this.btnDbQuery.TabIndex = 3;
-            this.btnDbQuery.Text = "查询";
-            this.btnDbQuery.UseVisualStyleBackColor = true;
-            this.btnDbQuery.Click += new System.EventHandler(this.btnDbQuery_Click);
-            // 
-            // btnDbCreate
-            // 
-            this.btnDbCreate.Location = new System.Drawing.Point(9, 54);
-            this.btnDbCreate.Name = "btnDbCreate";
-            this.btnDbCreate.Size = new System.Drawing.Size(60, 23);
-            this.btnDbCreate.TabIndex = 2;
-            this.btnDbCreate.Text = "新增";
-            this.btnDbCreate.UseVisualStyleBackColor = true;
-            this.btnDbCreate.Click += new System.EventHandler(this.btnDbCreate_Click);
-            // 
-            // btnExportCsv
-            // 
-            this.btnExportCsv.Location = new System.Drawing.Point(90, 17);
-            this.btnExportCsv.Name = "btnExportCsv";
-            this.btnExportCsv.Size = new System.Drawing.Size(60, 23);
-            this.btnExportCsv.TabIndex = 1;
-            this.btnExportCsv.Text = "导出CSV";
-            this.btnExportCsv.UseVisualStyleBackColor = true;
-            this.btnExportCsv.Click += new System.EventHandler(this.btnExportCsv_Click);
-            // 
-            // btnExportTxt
-            // 
-            this.btnExportTxt.Location = new System.Drawing.Point(9, 18);
-            this.btnExportTxt.Name = "btnExportTxt";
-            this.btnExportTxt.Size = new System.Drawing.Size(60, 23);
-            this.btnExportTxt.TabIndex = 0;
-            this.btnExportTxt.Text = "导出TXT";
-            this.btnExportTxt.UseVisualStyleBackColor = true;
-            this.btnExportTxt.Click += new System.EventHandler(this.btnExportTxt_Click);
+            this.btnOpenSerial.Location = new System.Drawing.Point(105, 12);
+            this.btnOpenSerial.Name = "btnOpenSerial";
+            this.btnOpenSerial.Size = new System.Drawing.Size(75, 26);
+            this.btnOpenSerial.TabIndex = 4;
+            this.btnOpenSerial.Text = "打开串口";
+            this.btnOpenSerial.UseVisualStyleBackColor = true;
+            this.btnOpenSerial.Click += new System.EventHandler(this.btnOpenSerial_Click);
             // 
             // groupBoxBatch
             // 
