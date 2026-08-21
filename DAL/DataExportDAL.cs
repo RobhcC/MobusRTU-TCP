@@ -182,6 +182,7 @@ namespace ModbusRTU_TCP.DAL
                         }
                     }
                 }
+                LogDb($"【数据库查询失败】未找到ID={id}的记录");
             }
             catch (Exception ex)
             {
