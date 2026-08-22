@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO.Ports;
 using System.Net.Sockets;
@@ -63,6 +64,10 @@ namespace ModbusRTU_TCP.BLL
         private const int EXPONENTIAL_BACKOFF_BASE_MS = 1000;   // 基础等待时间(毫秒)
         private const int EXPONENTIAL_BACKOFF_MAX_MS = 30000;   // 最大等待时间(毫秒)
 
+        // 内存缓冲刷库配置
+        private const int FLUSH_INTERVAL_MS = 10000;    // 定时刷库间隔(毫秒)
+        private const int FLUSH_THRESHOLD = 100;        // 队列攒满多少条立即提前刷库
+
         #endregion
 
         #region 私有字段
@@ -97,6 +102,10 @@ namespace ModbusRTU_TCP.BLL
         private int _reconnectAttempt = 0;
         // 是否正在重连中
         private bool _isReconnecting = false;
+        // 内存写入缓冲队列（生产者-消费者模式：采集线程入队，刷库定时器批量落库）
+        private readonly ConcurrentQueue<DataRecord> _writeBuffer = new ConcurrentQueue<DataRecord>();
+        // 刷库定时器（后台定期把缓冲队列批量写入数据库）
+        private System.Threading.Timer _flushTimer = null;
 
         #endregion
 
@@ -132,6 +141,9 @@ namespace ModbusRTU_TCP.BLL
         {
             dataExportDAL = new DataExportDAL();
             dataExportDAL.OnDbLog += (msg) => AddLog(msg);
+
+            // 启动刷库定时器：定期把内存缓冲队列中的数据批量写入数据库
+            _flushTimer = new System.Threading.Timer(_ => FlushBuffer(), null, FLUSH_INTERVAL_MS, FLUSH_INTERVAL_MS);
         }
 
         #endregion
@@ -840,17 +852,43 @@ namespace ModbusRTU_TCP.BLL
             }
         }
 
-        // 添加历史记录
+        // 添加历史记录（入队即返回，由刷库定时器批量落库，不阻塞采集线程）
         private void AddHistoryRecord(double temp, double humi, string status)
         {
             DataRecord record = new DataRecord(temp, humi, status);
             historyRecords.Add(record);
-            dataExportDAL.SaveRecordToSqlite(record);
+            _writeBuffer.Enqueue(record);   // 进内存缓冲队列，微秒级返回
 
             // 超过最大记录数时删除最早的记录
             if (historyRecords.Count > MaxRecordCount)
             {
                 historyRecords.RemoveAt(0);
+            }
+
+            // 队列攒满阈值，立即提前刷库，防止内存无限膨胀
+            if (_writeBuffer.Count >= FLUSH_THRESHOLD)
+            {
+                FlushBuffer();
+            }
+        }
+
+        // 把内存缓冲队列中的数据批量刷入数据库（消费者）
+        // 会被两个地方调用：刷库定时器定期触发 / 队列攒满阈值时提前触发 / 程序关闭前最后兜底
+        private void FlushBuffer()
+        {
+            // 队列为空直接返回
+            if (_writeBuffer.IsEmpty) return;
+
+            // 一次性取出全部数据（ConcurrentQueue 保证多线程下每条数据只会被取走一次）
+            List<DataRecord> batch = new List<DataRecord>();
+            while (_writeBuffer.TryDequeue(out DataRecord record))
+            {
+                batch.Add(record);
+            }
+
+            if (batch.Count > 0)
+            {
+                dataExportDAL.SaveRecordsBatch(batch);
             }
         }
 
@@ -1136,6 +1174,14 @@ namespace ModbusRTU_TCP.BLL
             if (disposing)
             {
                 StopExponentialReconnect();
+
+                // 停掉刷库定时器，并把缓冲队列中剩余数据全部落库（防止关程序时丢数据）
+                if (_flushTimer != null)
+                {
+                    _flushTimer.Dispose();
+                    _flushTimer = null;
+                }
+                FlushBuffer();
 
                 if (serialPort != null)
                 {

@@ -122,6 +122,52 @@ namespace ModbusRTU_TCP.DAL
             }
         }
 
+        // 批量写入多条记录（内存缓冲刷库专用）
+        // 核心优化：N 条记录共用一个事务提交，SQLite 只刷一次盘，比逐条写入快几十倍
+        public bool SaveRecordsBatch(List<DataRecord> records)
+        {
+            if (records == null || records.Count == 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                lock (_dbLock)
+                {
+                    using (SQLiteConnection conn = new SQLiteConnection(_connectionString))
+                    {
+                        conn.Open();
+                        const string insertSql = @"
+                        INSERT INTO ModbusDataRecords (CollectTime, Temperature, Humidity, Status)
+                        VALUES (@CollectTime, @Temperature, @Humidity, @Status);";
+
+                        using (SQLiteTransaction tran = conn.BeginTransaction())   // 开启事务
+                        using (SQLiteCommand cmd = new SQLiteCommand(insertSql, conn))
+                        {
+                            foreach (DataRecord record in records)
+                            {
+                                cmd.Parameters.AddWithValue("@CollectTime", record.CollectTime.ToString("yyyy-MM-dd HH:mm:ss"));
+                                cmd.Parameters.AddWithValue("@Temperature", record.Temperature);
+                                cmd.Parameters.AddWithValue("@Humidity", record.Humidity);
+                                cmd.Parameters.AddWithValue("@Status", record.Status ?? "正常");
+                                cmd.ExecuteNonQuery();
+                                record.Id = conn.LastInsertRowId;   // 回填自增ID，保持与单条写入行为一致
+                            }
+                            tran.Commit();   // N 条一起提交落盘
+                        }
+                    }
+                }
+                LogDb($"【批量写入成功】共 {records.Count} 条记录");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogDb($"【批量写入失败】{ex.Message}");
+                return false;
+            }
+        }
+
         public List<DataRecord> GetAllRecordsFromSqlite()
         {
             var result = new List<DataRecord>();
