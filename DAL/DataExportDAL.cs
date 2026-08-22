@@ -168,6 +168,41 @@ namespace ModbusRTU_TCP.DAL
             }
         }
 
+        // 死信降级：刷库重试超限的批次追加写入本地TXT文件，防止数据彻底丢失（人工兜底）
+        // 文件位置与数据库同目录：D:\SQLiteData\DeadLetterRecords.txt
+        public bool SaveToDeadLetter(List<DataRecord> records)
+        {
+            if (records == null || records.Count == 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                if (!Directory.Exists(DbDirectory))
+                {
+                    Directory.CreateDirectory(DbDirectory);
+                }
+                string deadLetterPath = Path.Combine(DbDirectory, "DeadLetterRecords.txt");
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine($"# 死信批次 {DateTime.Now:yyyy-MM-dd HH:mm:ss} 共{records.Count}条（多次刷库失败，人工核对后可补录）");
+                foreach (DataRecord record in records)
+                {
+                    sb.AppendLine($"{record.CollectTime:yyyy-MM-dd HH:mm:ss},{record.Temperature:0.0},{record.Humidity:0.0},{record.Status}");
+                }
+
+                File.AppendAllText(deadLetterPath, sb.ToString(), Encoding.UTF8);   // 追加模式，不覆盖历史死信
+                LogDb($"【死信落盘成功】{deadLetterPath}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogDb($"【死信落盘失败】{ex.Message}");
+                return false;
+            }
+        }
+
         public List<DataRecord> GetAllRecordsFromSqlite()
         {
             var result = new List<DataRecord>();

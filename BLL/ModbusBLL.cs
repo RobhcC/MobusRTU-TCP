@@ -68,6 +68,10 @@ namespace ModbusRTU_TCP.BLL
         private const int FLUSH_INTERVAL_MS = 10000;    // 定时刷库间隔(毫秒)
         private const int FLUSH_THRESHOLD = 100;        // 队列攒满多少条立即提前刷库
 
+        // 刷库失败重试与死信配置
+        private const int FLUSH_RETRY_COUNT = 3;        // 刷库失败重试上限
+        private const int FLUSH_RETRY_DELAY_MS = 1000;  // 每次重试的等待间隔(毫秒)
+
         #endregion
 
         #region 私有字段
@@ -873,7 +877,8 @@ namespace ModbusRTU_TCP.BLL
         }
 
         // 把内存缓冲队列中的数据批量刷入数据库（消费者）
-        // 会被两个地方调用：刷库定时器定期触发 / 队列攒满阈值时提前触发 / 程序关闭前最后兜底
+        // 会被三个地方调用：刷库定时器定期触发 / 队列攒满阈值时提前触发 / 程序关闭前最后兜底
+        // 数据已出队但写库失败时：先重试（最多FLUSH_RETRY_COUNT次），重试超限进死信文件兜底，绝不静默丢弃
         private void FlushBuffer()
         {
             // 队列为空直接返回
@@ -886,10 +891,24 @@ namespace ModbusRTU_TCP.BLL
                 batch.Add(record);
             }
 
-            if (batch.Count > 0)
+            if (batch.Count == 0) return;
+
+            // 第一道闸：失败重试，上限 FLUSH_RETRY_COUNT 次
+            for (int attempt = 1; attempt <= FLUSH_RETRY_COUNT; attempt++)
             {
-                dataExportDAL.SaveRecordsBatch(batch);
+                if (dataExportDAL.SaveRecordsBatch(batch))
+                {
+                    return;   // 写库成功，结束
+                }
+                AddLog($"【刷库失败】第 {attempt}/{FLUSH_RETRY_COUNT} 次尝试失败，{FLUSH_RETRY_DELAY_MS}ms 后重试");
+
+                // 等待后再试（本方法跑在后台线程池线程上，Sleep 不影响 UI）
+                System.Threading.Thread.Sleep(FLUSH_RETRY_DELAY_MS);
             }
+
+            // 第二道闸：重试超限 → 进死信（记日志 + 降级追加写 TXT 文件，人工兜底）
+            AddLog($"【死信】连续 {FLUSH_RETRY_COUNT} 次刷库失败，{batch.Count} 条数据已降级写入死信文件");
+            dataExportDAL.SaveToDeadLetter(batch);
         }
 
         // 获取历史记录列表
