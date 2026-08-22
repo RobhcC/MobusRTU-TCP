@@ -684,6 +684,13 @@ namespace ModbusRTU_TCP.BLL
                     AddLog("【错误】RTU CRC校验失败，数据可能损坏");
                     return;
                 }
+                // 多从站RS-485总线防护：应答报文首字节必须是自己请求的从站地址
+                // 否则可能是总线上其他从站的应答串进来了，张冠李戴解析成自己的数据
+                if (data[0] != _slaveAddress)
+                {
+                    AddLog($"【警告】应答从站地址不匹配（收到0x{data[0]:X2}，期望0x{_slaveAddress:X2}），丢弃");
+                    return;
+                }
             }
 
             byte functionCode = (protocolIndex == 0) ? data[1] : data[0];
