@@ -148,6 +148,10 @@ namespace ModbusRTU_TCP.BLL
 
             // 启动刷库定时器：定期把内存缓冲队列中的数据批量写入数据库
             _flushTimer = new System.Threading.Timer(_ => FlushBuffer(), null, FLUSH_INTERVAL_MS, FLUSH_INTERVAL_MS);
+
+            // 挂全局异常钩子：进程崩溃/退出前最后抢救一次缓冲数据（防止内存数据丢失）
+            AppDomain.CurrentDomain.UnhandledException += OnFatalException;
+            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
         }
 
         #endregion
@@ -911,6 +915,26 @@ namespace ModbusRTU_TCP.BLL
             dataExportDAL.SaveToDeadLetter(batch);
         }
 
+        #region 全局异常兜底钩子
+
+        // 后台线程发生未捕获异常：进程即将终止，死前最后抢救一次缓冲数据
+        private void OnFatalException(object sender, UnhandledExceptionEventArgs e)
+        {
+            try { FlushBuffer(); } catch { }   // 兜底路径绝不能再抛异常，吞掉一切
+        }
+
+        // 进程退出（含部分异常场景）：兜底刷一次库
+        private void OnProcessExit(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!_disposed) FlushBuffer();
+            }
+            catch { }
+        }
+
+        #endregion
+
         // 获取历史记录列表
         public List<DataRecord> GetHistoryRecords()
         {
@@ -1192,6 +1216,10 @@ namespace ModbusRTU_TCP.BLL
 
             if (disposing)
             {
+                // 解绑全局异常钩子（AppDomain事件属于进程级静态事件，不解绑会一直引用BLL，导致其无法被GC回收）
+                AppDomain.CurrentDomain.UnhandledException -= OnFatalException;
+                AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
+
                 StopExponentialReconnect();
 
                 // 停掉刷库定时器，并把缓冲队列中剩余数据全部落库（防止关程序时丢数据）
